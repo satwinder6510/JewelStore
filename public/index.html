@@ -439,18 +439,34 @@
     function renderBackgroundGrid(backgrounds) {
       const grid = document.getElementById('backgroundGrid');
       if (backgrounds.length === 0) {
-        grid.innerHTML = '<div style="color: #666; text-align: center; padding: 20px;">No backgrounds</div>';
+        grid.innerHTML = '<div style="color: #666; text-align: center; padding: 20px;">No backgrounds - upload some!</div>';
         return;
       }
       grid.innerHTML = backgrounds.map(bg => `
         <div class="image-thumb ${selectedBackground === bg.filename ? 'selected' : ''}"
-             onclick="selectBackground('${bg.filename}')"
              title="${bg.name}"
              style="position: relative;">
-          <img src="${bg.path}" alt="${bg.name}">
+          <img src="${bg.path}" alt="${bg.name}" onclick="selectBackground('${bg.filename}')">
+          <div style="position: absolute; top: 2px; right: 2px; display: flex; gap: 2px;">
+            <span onclick="event.stopPropagation(); toggleFavBg('${bg.filename}')" style="cursor: pointer; font-size: 12px;">${bg.favorite ? '⭐' : '☆'}</span>
+            <span onclick="event.stopPropagation(); deleteBg('${bg.filename}')" style="cursor: pointer; font-size: 12px;">✕</span>
+          </div>
           <div style="position: absolute; bottom: 2px; left: 2px; right: 2px; font-size: 9px; color: #fff; text-shadow: 0 0 3px #000; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${bg.name}</div>
         </div>
       `).join('');
+    }
+
+    async function toggleFavBg(filename) {
+      await fetch('/api/backgrounds/' + filename + '/favorite', { method: 'POST' });
+      loadBackgrounds();
+    }
+
+    async function deleteBg(filename) {
+      if (!confirm('Delete this background?')) return;
+      await fetch('/api/backgrounds/' + filename, { method: 'DELETE' });
+      if (selectedBackground === filename) selectedBackground = null;
+      loadBackgrounds();
+      updatePreview();
     }
 
     function selectBackground(filename) {
@@ -498,18 +514,35 @@
     function renderPropsGrid(props) {
       const grid = document.getElementById('propsGrid');
       if (props.length === 0) {
-        grid.innerHTML = '<div style="color: #666; text-align: center; padding: 10px; font-size: 12px;">No props available</div>';
+        grid.innerHTML = '<div style="color: #666; text-align: center; padding: 10px; font-size: 12px;">No props - upload some!</div>';
         return;
       }
       grid.innerHTML = props.map(prop => `
         <div class="image-thumb ${selectedProps.includes(prop.filename) ? 'selected' : ''}"
-             onclick="toggleProp('${prop.filename}')"
              title="${prop.name}"
              style="position: relative; aspect-ratio: 1; background: repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 10px 10px;">
-          <img src="${prop.path}" alt="${prop.name}" style="object-fit: contain;">
+          <img src="${prop.path}" alt="${prop.name}" style="object-fit: contain;" onclick="toggleProp('${prop.filename}')">
+          <div style="position: absolute; top: 1px; right: 1px; display: flex; gap: 1px;">
+            <span onclick="event.stopPropagation(); toggleFavProp('${prop.filename}')" style="cursor: pointer; font-size: 10px;">${prop.favorite ? '⭐' : '☆'}</span>
+            <span onclick="event.stopPropagation(); deleteProp('${prop.filename}')" style="cursor: pointer; font-size: 10px;">✕</span>
+          </div>
           <div style="position: absolute; bottom: 2px; left: 2px; right: 2px; font-size: 8px; color: #fff; text-shadow: 0 0 3px #000; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${prop.name}</div>
         </div>
       `).join('');
+    }
+
+    async function toggleFavProp(filename) {
+      await fetch('/api/props/' + filename + '/favorite', { method: 'POST' });
+      loadProps();
+    }
+
+    async function deleteProp(filename) {
+      if (!confirm('Delete this prop?')) return;
+      await fetch('/api/props/' + filename, { method: 'DELETE' });
+      selectedProps = selectedProps.filter(p => p !== filename);
+      delete propPositions[filename];
+      loadProps();
+      updatePreview();
     }
 
     function toggleProp(filename) {

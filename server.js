@@ -155,20 +155,63 @@ app.post('/api/upload-background', bgUpload.single('background'), (req, res) => 
   });
 });
 
-// List available backgrounds
+// Favorites storage
+const favoritesFile = path.join(__dirname, 'favorites.json');
+function loadFavorites() {
+  if (fs.existsSync(favoritesFile)) {
+    return JSON.parse(fs.readFileSync(favoritesFile, 'utf8'));
+  }
+  return { backgrounds: [], props: [] };
+}
+function saveFavorites(favs) {
+  fs.writeFileSync(favoritesFile, JSON.stringify(favs, null, 2));
+}
+
+// List available backgrounds (favorites first)
 app.get('/api/backgrounds', (req, res) => {
   const bgDir = path.join(__dirname, 'backgrounds');
   if (!fs.existsSync(bgDir)) {
     return res.json([]);
   }
+  const favs = loadFavorites();
   const backgrounds = fs.readdirSync(bgDir)
     .filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
     .map(f => ({
       name: f.replace(/\.[^.]+$/, '').replace(/-/g, ' '),
       filename: f,
-      path: '/backgrounds/' + f
-    }));
+      path: '/backgrounds/' + f,
+      favorite: favs.backgrounds.includes(f)
+    }))
+    .sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
   res.json(backgrounds);
+});
+
+// Delete background
+app.delete('/api/backgrounds/:filename', (req, res) => {
+  const filePath = path.join(__dirname, 'backgrounds', path.basename(req.params.filename));
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+    // Remove from favorites if present
+    const favs = loadFavorites();
+    favs.backgrounds = favs.backgrounds.filter(f => f !== req.params.filename);
+    saveFavorites(favs);
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
+});
+
+// Toggle background favorite
+app.post('/api/backgrounds/:filename/favorite', (req, res) => {
+  const favs = loadFavorites();
+  const filename = req.params.filename;
+  if (favs.backgrounds.includes(filename)) {
+    favs.backgrounds = favs.backgrounds.filter(f => f !== filename);
+  } else {
+    favs.backgrounds.push(filename);
+  }
+  saveFavorites(favs);
+  res.json({ success: true, favorite: favs.backgrounds.includes(filename) });
 });
 
 // Upload a prop image
@@ -202,20 +245,50 @@ app.post('/api/upload-prop', propUpload.single('prop'), (req, res) => {
   });
 });
 
-// List available props
+// List available props (favorites first)
 app.get('/api/props', (req, res) => {
   const propsDir = path.join(__dirname, 'props');
   if (!fs.existsSync(propsDir)) {
     return res.json([]);
   }
+  const favs = loadFavorites();
   const props = fs.readdirSync(propsDir)
     .filter(f => /\.(png|webp)$/i.test(f))
     .map(f => ({
       name: f.replace(/\.[^.]+$/, '').replace(/-/g, ' '),
       filename: f,
-      path: '/props/' + f
-    }));
+      path: '/props/' + f,
+      favorite: favs.props.includes(f)
+    }))
+    .sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
   res.json(props);
+});
+
+// Delete prop
+app.delete('/api/props/:filename', (req, res) => {
+  const filePath = path.join(__dirname, 'props', path.basename(req.params.filename));
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+    const favs = loadFavorites();
+    favs.props = favs.props.filter(f => f !== req.params.filename);
+    saveFavorites(favs);
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
+});
+
+// Toggle prop favorite
+app.post('/api/props/:filename/favorite', (req, res) => {
+  const favs = loadFavorites();
+  const filename = req.params.filename;
+  if (favs.props.includes(filename)) {
+    favs.props = favs.props.filter(f => f !== filename);
+  } else {
+    favs.props.push(filename);
+  }
+  saveFavorites(favs);
+  res.json({ success: true, favorite: favs.props.includes(filename) });
 });
 
 // Generate styled image using background library
