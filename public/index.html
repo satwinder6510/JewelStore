@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>JewelStudio - AI Product Photography</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #fff;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: 32px;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #ffd700, #ffaa00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 30px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    h2 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: #ffd700;
+    }
+    .upload-zone {
+      border: 2px dashed rgba(255,215,0,0.3);
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 16px;
+    }
+    .upload-zone:hover {
+      border-color: #ffd700;
+      background: rgba(255,215,0,0.05);
+    }
+    .upload-zone input { display: none; }
+    .upload-icon { font-size: 48px; margin-bottom: 12px; }
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .image-thumb {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .image-thumb:hover { border-color: #ffd700; }
+    .image-thumb.selected { border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.5); }
+    .image-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #aaa;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 14px;
+      resize: vertical;
+    }
+    textarea:focus, input:focus {
+      outline: none;
+      border-color: #ffd700;
+    }
+    textarea { min-height: 100px; }
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(90deg, #ffd700, #ffaa00);
+      color: #000;
+      width: 100%;
+      margin-top: 16px;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,215,0,0.3); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .result-image {
+      width: 100%;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #ffd700;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,215,0,0.2);
+      border-top-color: #ffd700;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error {
+      background: rgba(255,0,0,0.2);
+      border: 1px solid rgba(255,0,0,0.3);
+      padding: 12px;
+      border-radius: 8px;
+      color: #ff6b6b;
+      margin-top: 16px;
+    }
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .preset {
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preset:hover { background: rgba(255,215,0,0.2); }
+    .download-btn {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .download-btn:hover { background: rgba(255,255,255,0.2); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>JewelStudio</h1>
+    <p class="subtitle">AI-Powered Jewelry Product Photography</p>
+
+    <div class="grid">
+      <!-- Left Panel - Upload & Select -->
+      <div class="panel">
+        <h2>1. Upload Your Jewelry</h2>
+        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" accept="image/*,.jfif" onchange="uploadImage(this)">
+          <div class="upload-icon">💎</div>
+          <div>Click to upload jewelry image</div>
+          <div style="font-size: 12px; color: #666; margin-top: 8px;">PNG, JPG or WebP</div>
+        </div>
+
+        <h2 style="display: flex; justify-content: space-between; align-items: center;">
+          2. Select Image
+          <button onclick="clearImages()" style="font-size: 11px; padding: 4px 8px; background: rgba(255,100,100,0.2); color: #ff6b6b; border: 1px solid rgba(255,100,100,0.3); border-radius: 4px; cursor: pointer;">Clear All</button>
+        </h2>
+        <div id="imageGrid" class="image-grid">
+          <div style="color: #666; text-align: center; padding: 20px;">No images uploaded yet</div>
+        </div>
+
+        <h2 style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+          3. Choose Background
+          <label style="font-size: 11px; padding: 4px 8px; background: rgba(255,215,0,0.2); color: #ffd700; border: 1px solid rgba(255,215,0,0.3); border-radius: 4px; cursor: pointer; font-weight: normal;">
+            + Upload
+            <input type="file" accept="image/*" onchange="uploadBackground(this)" style="display: none;">
+          </label>
+        </h2>
+        <div id="backgroundGrid" class="image-grid" style="grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); max-height: 200px;">
+          <div style="color: #666; text-align: center; padding: 20px;">Loading...</div>
+        </div>
+
+        <h2 style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+          4. Add Props <span style="font-size: 11px; color: #888; font-weight: normal;">(optional)</span>
+          <label style="font-size: 11px; padding: 4px 8px; background: rgba(255,215,0,0.2); color: #ffd700; border: 1px solid rgba(255,215,0,0.3); border-radius: 4px; cursor: pointer; font-weight: normal;">
+            + Upload Prop
+            <input type="file" accept="image/png" onchange="uploadProp(this)" style="display: none;">
+          </label>
+        </h2>
+        <div id="propsGrid" class="image-grid" style="grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); max-height: 150px;">
+          <div style="color: #666; text-align: center; padding: 20px;">Loading...</div>
+        </div>
+
+        <h2 style="margin-top: 20px;">5. Composition</h2>
+        <div class="presets" style="margin-bottom: 8px;">
+          <span class="preset" style="background: rgba(255,215,0,0.3);" onclick="setComposition('centered')" id="comp-centered">Centered</span>
+          <span class="preset" onclick="setComposition('in-box')" id="comp-in-box">In Box</span>
+          <span class="preset" onclick="setComposition('on-prop')" id="comp-on-prop">On Prop</span>
+          <span class="preset" onclick="setComposition('custom')" id="comp-custom">Custom</span>
+        </div>
+        <textarea id="compositionPrompt" placeholder="Describe placement (for custom mode)...&#10;e.g. place earrings inside the jewelry box&#10;e.g. necklace draped over the left side" style="min-height: 60px; display: none;"></textarea>
+
+        <button class="btn-primary" id="generateBtn" onclick="generate()">
+          Generate Product Shot
+        </button>
+        <button class="btn-primary" id="cutoutBtn" onclick="getCutout()" style="background: rgba(255,255,255,0.1); color: #fff; margin-top: 8px;">
+          ✂️ Remove Background Only
+        </button>
+      </div>
+
+      <!-- Right Panel - Preview & Result -->
+      <div class="panel">
+        <h2 style="display: flex; justify-content: space-between; align-items: center;">
+          <span id="previewTitle">Preview</span>
+          <button onclick="resetPositions()" style="font-size: 11px; padding: 4px 8px; background: rgba(255,255,255,0.1); color: #aaa; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; cursor: pointer;">Reset</button>
+        </h2>
+        <div style="display: flex; gap: 12px; margin-bottom: 12px; align-items: center;">
+          <label style="font-size: 12px; color: #888; white-space: nowrap;">Jewelry size:</label>
+          <input type="range" id="jewelrySize" min="15" max="80" value="45" oninput="setJewelrySize(this.value)" style="flex: 1; accent-color: #ffd700;">
+          <span id="jewelrySizeVal" style="font-size: 12px; color: #ffd700; min-width: 35px;">45%</span>
+        </div>
+        <div id="previewArea" style="position: relative; width: 100%; aspect-ratio: 1; background: #222; border-radius: 8px; overflow: hidden; margin-bottom: 16px;">
+          <div style="color: #666; text-align: center; padding: 60px 20px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            Select background to preview
+          </div>
+        </div>
+        <h2>Generated Image</h2>
+        <div id="resultArea">
+          <div style="color: #666; text-align: center; padding: 20px; font-size: 13px;">
+            Arrange items above, then generate
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedImage = null;
+    let selectedBackground = null;
+    let selectedProps = [];
+    let compositionMode = 'centered';
+
+    // Drag positions (normalized 0-1)
+    let jewelryPos = { x: 0.5, y: 0.5 };
+    let jewelryScale = 0.45; // 0.1 to 0.8
+    let propPositions = {}; // { filename: { x, y } }
+    let propScales = {}; // { filename: scale }
+    let dragging = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    function resetPositions() {
+      jewelryPos = { x: 0.5, y: 0.5 };
+      jewelryScale = 0.45;
+      propPositions = {};
+      propScales = {};
+      document.getElementById('jewelrySize').value = 45;
+      document.getElementById('jewelrySizeVal').textContent = '45%';
+      updatePreview();
+    }
+
+    function setJewelrySize(val) {
+      jewelryScale = val / 100;
+      document.getElementById('jewelrySizeVal').textContent = val + '%';
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const preview = document.getElementById('previewArea');
+      if (!selectedBackground) {
+        preview.innerHTML = '<div style="color: #666; text-align: center; padding: 60px 20px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Select background to preview</div>';
+        return;
+      }
+
+      let html = `<img src="/backgrounds/${selectedBackground}" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;">`;
+
+      // Add props
+      selectedProps.forEach((prop, i) => {
+        const pos = propPositions[prop] || getDefaultPropPos(i);
+        html += `<img src="/props/${prop}"
+          class="draggable"
+          data-type="prop"
+          data-id="${prop}"
+          style="position: absolute; left: ${pos.x * 100}%; top: ${pos.y * 100}%; transform: translate(-50%, -50%); width: 20%; cursor: move; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));"
+          draggable="false">`;
+      });
+
+      // Add jewelry
+      if (selectedImage) {
+        html += `<img src="${selectedImage}"
+          class="draggable"
+          data-type="jewelry"
+          style="position: absolute; left: ${jewelryPos.x * 100}%; top: ${jewelryPos.y * 100}%; transform: translate(-50%, -50%); width: ${jewelryScale * 100}%; cursor: move; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));"
+          draggable="false">`;
+      }
+
+      preview.innerHTML = html;
+
+      // Add drag listeners
+      preview.querySelectorAll('.draggable').forEach(el => {
+        el.addEventListener('mousedown', startDrag);
+        el.addEventListener('touchstart', startDrag, { passive: false });
+      });
+    }
+
+    function getDefaultPropPos(index) {
+      const positions = [
+        { x: 0.15, y: 0.2 },
+        { x: 0.85, y: 0.2 },
+        { x: 0.15, y: 0.8 },
+        { x: 0.85, y: 0.8 },
+        { x: 0.1, y: 0.5 },
+        { x: 0.9, y: 0.5 }
+      ];
+      return positions[index % positions.length];
+    }
+
+    function startDrag(e) {
+      e.preventDefault();
+      const el = e.target;
+      const preview = document.getElementById('previewArea');
+      const rect = preview.getBoundingClientRect();
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const elRect = el.getBoundingClientRect();
+      dragOffset.x = clientX - (elRect.left + elRect.width / 2);
+      dragOffset.y = clientY - (elRect.top + elRect.height / 2);
+
+      dragging = {
+        el: el,
+        type: el.dataset.type,
+        id: el.dataset.id
+      };
+
+      document.addEventListener('mousemove', onDrag);
+      document.addEventListener('mouseup', stopDrag);
+      document.addEventListener('touchmove', onDrag, { passive: false });
+      document.addEventListener('touchend', stopDrag);
+    }
+
+    function onDrag(e) {
+      if (!dragging) return;
+      e.preventDefault();
+
+      const preview = document.getElementById('previewArea');
+      const rect = preview.getBoundingClientRect();
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      let x = (clientX - dragOffset.x - rect.left) / rect.width;
+      let y = (clientY - dragOffset.y - rect.top) / rect.height;
+
+      // Clamp to bounds
+      x = Math.max(0.1, Math.min(0.9, x));
+      y = Math.max(0.1, Math.min(0.9, y));
+
+      if (dragging.type === 'jewelry') {
+        jewelryPos = { x, y };
+      } else if (dragging.type === 'prop') {
+        propPositions[dragging.id] = { x, y };
+      }
+
+      // Update element position directly for smooth dragging
+      dragging.el.style.left = (x * 100) + '%';
+      dragging.el.style.top = (y * 100) + '%';
+    }
+
+    function stopDrag() {
+      dragging = null;
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+      document.removeEventListener('touchmove', onDrag);
+      document.removeEventListener('touchend', stopDrag);
+    }
+
+    function setComposition(mode) {
+      compositionMode = mode;
+      // Update button styles
+      document.querySelectorAll('.presets .preset').forEach(el => {
+        el.style.background = 'rgba(255,255,255,0.1)';
+      });
+      const btn = document.getElementById('comp-' + mode);
+      if (btn) btn.style.background = 'rgba(255,215,0,0.3)';
+
+      // Show/hide custom prompt
+      const prompt = document.getElementById('compositionPrompt');
+      prompt.style.display = mode === 'custom' ? 'block' : 'none';
+    }
+
+    // Load backgrounds
+    async function loadBackgrounds() {
+      try {
+        const res = await fetch('/api/backgrounds');
+        const backgrounds = await res.json();
+        renderBackgroundGrid(backgrounds);
+      } catch (err) {
+        console.error('Failed to load backgrounds:', err);
+      }
+    }
+
+    function renderBackgroundGrid(backgrounds) {
+      const grid = document.getElementById('backgroundGrid');
+      if (backgrounds.length === 0) {
+        grid.innerHTML = '<div style="color: #666; text-align: center; padding: 20px;">No backgrounds</div>';
+        return;
+      }
+      grid.innerHTML = backgrounds.map(bg => `
+        <div class="image-thumb ${selectedBackground === bg.filename ? 'selected' : ''}"
+             onclick="selectBackground('${bg.filename}')"
+             title="${bg.name}"
+             style="position: relative;">
+          <img src="${bg.path}" alt="${bg.name}">
+          <div style="position: absolute; bottom: 2px; left: 2px; right: 2px; font-size: 9px; color: #fff; text-shadow: 0 0 3px #000; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${bg.name}</div>
+        </div>
+      `).join('');
+    }
+
+    function selectBackground(filename) {
+      selectedBackground = filename;
+      loadBackgrounds();
+      updatePreview();
+    }
+
+    async function uploadBackground(input) {
+      if (!input.files[0]) return;
+
+      const formData = new FormData();
+      formData.append('background', input.files[0]);
+
+      try {
+        const res = await fetch('/api/upload-background', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          selectedBackground = data.filename;
+          loadBackgrounds();
+        } else {
+          alert('Upload failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Upload failed: ' + err.message);
+      }
+
+      input.value = '';
+    }
+
+    // Load props
+    async function loadProps() {
+      try {
+        const res = await fetch('/api/props');
+        const props = await res.json();
+        renderPropsGrid(props);
+      } catch (err) {
+        console.error('Failed to load props:', err);
+      }
+    }
+
+    function renderPropsGrid(props) {
+      const grid = document.getElementById('propsGrid');
+      if (props.length === 0) {
+        grid.innerHTML = '<div style="color: #666; text-align: center; padding: 10px; font-size: 12px;">No props available</div>';
+        return;
+      }
+      grid.innerHTML = props.map(prop => `
+        <div class="image-thumb ${selectedProps.includes(prop.filename) ? 'selected' : ''}"
+             onclick="toggleProp('${prop.filename}')"
+             title="${prop.name}"
+             style="position: relative; aspect-ratio: 1; background: repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 10px 10px;">
+          <img src="${prop.path}" alt="${prop.name}" style="object-fit: contain;">
+          <div style="position: absolute; bottom: 2px; left: 2px; right: 2px; font-size: 8px; color: #fff; text-shadow: 0 0 3px #000; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${prop.name}</div>
+        </div>
+      `).join('');
+    }
+
+    function toggleProp(filename) {
+      const idx = selectedProps.indexOf(filename);
+      if (idx === -1) {
+        if (selectedProps.length < 6) {
+          selectedProps.push(filename);
+        }
+      } else {
+        selectedProps.splice(idx, 1);
+        delete propPositions[filename];
+      }
+      loadProps();
+      updatePreview();
+    }
+
+    async function uploadProp(input) {
+      if (!input.files[0]) return;
+
+      const formData = new FormData();
+      formData.append('prop', input.files[0]);
+
+      try {
+        const res = await fetch('/api/upload-prop', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          loadProps();
+        } else {
+          alert('Upload failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Upload failed: ' + err.message);
+      }
+
+      input.value = '';
+    }
+
+    // Load existing images on page load
+    async function loadImages() {
+      try {
+        const res = await fetch('/api/images');
+        const images = await res.json();
+        renderImageGrid(images);
+      } catch (err) {
+        console.error('Failed to load images:', err);
+      }
+    }
+
+    function renderImageGrid(images) {
+      const grid = document.getElementById('imageGrid');
+      if (images.length === 0) {
+        grid.innerHTML = '<div style="color: #666; text-align: center; padding: 20px;">No images uploaded yet</div>';
+        return;
+      }
+      grid.innerHTML = images.map(img => `
+        <div class="image-thumb ${selectedImage === img.path ? 'selected' : ''}" onclick="selectImage('${img.path}')">
+          <img src="${img.path}" alt="${img.filename}">
+        </div>
+      `).join('');
+    }
+
+    function selectImage(path) {
+      selectedImage = path;
+      loadImages();
+      updatePreview();
+    }
+
+    async function uploadImage(input) {
+      if (!input.files[0]) return;
+
+      const formData = new FormData();
+      formData.append('image', input.files[0]);
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.path) {
+          selectedImage = data.path;
+          loadImages();
+        }
+      } catch (err) {
+        console.error('Upload failed:', err);
+      }
+
+      input.value = '';
+    }
+
+    async function generate() {
+      if (!selectedImage) {
+        alert('Please select a jewelry image first');
+        return;
+      }
+
+      if (!selectedBackground) {
+        alert('Please select a background');
+        return;
+      }
+
+      const btn = document.getElementById('generateBtn');
+      const resultArea = document.getElementById('resultArea');
+
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      resultArea.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <div>Creating your product shot...</div>
+          <div style="font-size: 12px; color: #666; margin-top: 8px;">Removing background...</div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jewelryImage: selectedImage,
+            background: selectedBackground,
+            props: selectedProps,
+            composition: compositionMode,
+            compositionPrompt: document.getElementById('compositionPrompt').value,
+            jewelryPos: jewelryPos,
+            jewelryScale: jewelryScale,
+            propPositions: propPositions
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.image) {
+          const images = data.images || { main: data.image };
+          resultArea.innerHTML = `
+            <img src="${images.main || data.image}" class="result-image" alt="Generated product shot">
+            <div style="margin-top: 16px;">
+              <div style="font-size: 12px; color: #888; margin-bottom: 8px;">Shopify-optimized downloads:</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                ${images.main ? `<a href="${images.main}" download class="download-btn">📦 Main (2048px WebP)</a>` : ''}
+                ${images.medium ? `<a href="${images.medium}" download class="download-btn">🖼 Medium (1024px)</a>` : ''}
+                ${images.thumbnail ? `<a href="${images.thumbnail}" download class="download-btn">🔍 Thumb (480px)</a>` : ''}
+                ${images.original ? `<a href="${images.original}" download class="download-btn">💎 Original PNG</a>` : ''}
+                ${images.cutout ? `<a href="${images.cutout}" download class="download-btn">✂️ Cutout (No BG)</a>` : ''}
+              </div>
+            </div>
+          `;
+        } else {
+          resultArea.innerHTML = `<div class="error">${data.error || 'Failed to generate image'}<br><small>${data.message || ''}</small></div>`;
+        }
+      } catch (err) {
+        resultArea.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+      }
+
+      btn.disabled = false;
+      btn.textContent = '✨ Generate Product Shot';
+    }
+
+    async function getCutout() {
+      if (!selectedImage) {
+        alert('Please select a jewelry image first');
+        return;
+      }
+
+      const btn = document.getElementById('cutoutBtn');
+      const resultArea = document.getElementById('resultArea');
+
+      btn.disabled = true;
+      btn.textContent = 'Removing background...';
+      resultArea.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <div>Removing background...</div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/cutout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jewelryImage: selectedImage })
+        });
+
+        const data = await res.json();
+
+        if (data.cutout) {
+          resultArea.innerHTML = `
+            <img src="${data.cutout}" class="result-image" alt="Cutout" style="background: repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 20px 20px;">
+            <div style="margin-top: 16px;">
+              <a href="${data.cutout}" download class="download-btn">✂️ Download Cutout (PNG)</a>
+            </div>
+          `;
+        } else {
+          resultArea.innerHTML = `<div class="error">${data.error || 'Failed to remove background'}</div>`;
+        }
+      } catch (err) {
+        resultArea.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+      }
+
+      btn.disabled = false;
+      btn.textContent = '✂️ Remove Background Only';
+    }
+
+    async function clearImages() {
+      if (!confirm('Clear all uploaded images?')) return;
+      try {
+        await fetch('/api/clear', { method: 'POST' });
+        selectedImage = null;
+        loadImages();
+      } catch (err) {
+        console.error('Failed to clear:', err);
+      }
+    }
+
+    // Initialize
+    loadImages();
+    loadBackgrounds();
+    loadProps();
+  </script>
+</body>
+</html>
