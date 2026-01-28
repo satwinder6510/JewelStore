@@ -33,7 +33,9 @@ async function removeBackground(inputPath) {
   const outputPath = inputPath.replace(/\.[^.]+$/, '-nobg.png');
 
   return new Promise((resolve, reject) => {
-    const py = spawn('python', [
+    // Use python3 on Linux, python on Windows
+    const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+    const py = spawn(pythonCmd, [
       path.join(__dirname, 'remove_bg.py'),
       inputPath,
       outputPath

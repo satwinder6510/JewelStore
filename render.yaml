@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: jewelstudio
+    env: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
